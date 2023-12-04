@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo, useState, useLayoutEffect } from 'react';
 import { Stage, Layer, Group, Circle, Image, Text } from "react-konva";
 import useImage from 'use-image';
+import updateNumberModal from 'component/modal/updateNumberModal';
 
 const GroundImage = () => {
     const [image] = useImage('img/ground2.jpg');
@@ -95,74 +96,76 @@ const GroundCanvas = () => {
     }
 
     return (
-        <Stage width={window.innerWidth} height={window.innerHeight} style={{ backgroundColor: '#1c3247' }}>
-            <Layer>
-                <GroundImage />
-                {homePlayers.map((data) => (
-                    <Group
-                        key={data.id}
-                        id={data.id}
-                        draggable
-                        x={data.x}
-                        y={data.y}
-                        scaleX={data.isDragging ? 1.1 : 1}
-                        scaleY={data.isDragging ? 1.1 : 1}
-                        onDragStart={handleDragHomeStart}
-                        onDragEnd={handleDragHomeEnd}
-                        onDblClick={handelDbClickHomePlayer}
-                    >
-                        <Circle
-                            radius={20}
-                            fill="white"
-                            strokeWidth={1} // border width
-                            stroke="black" // border color
-                        />
-                        <Text
-                            text={data.value}
+        <>
+            <Stage width={window.innerWidth} height={window.innerHeight} style={{ backgroundColor: '#1c3247' }}>
+                <Layer>
+                    <GroundImage />
+                    {homePlayers.map((data) => (
+                        <Group
+                            key={data.id}
                             id={data.id}
-                            fontSize={18}
-                            fill="black"
-                            x={-20}
-                            y={-6}
-                            align="center"
-                            verticalAlign="middle"
-                            width={40}
-                        />
-                    </Group>
-                ))}
+                            draggable
+                            x={data.x}
+                            y={data.y}
+                            scaleX={data.isDragging ? 1.1 : 1}
+                            scaleY={data.isDragging ? 1.1 : 1}
+                            onDragStart={handleDragHomeStart}
+                            onDragEnd={handleDragHomeEnd}
+                            onDblClick={handelDbClickHomePlayer}
+                        >
+                            <Circle
+                                radius={20}
+                                fill="white"
+                                strokeWidth={1} // border width
+                                stroke="black" // border color
+                            />
+                            <Text
+                                text={data.value}
+                                id={data.id}
+                                fontSize={18}
+                                fill="black"
+                                x={-20}
+                                y={-6}
+                                align="center"
+                                verticalAlign="middle"
+                                width={40}
+                            />
+                        </Group>
+                    ))}
 
-                {awayPlayers.map((data) => (
-                    <Group
-                        key={data.id}
-                        id={data.id}
-                        draggable
-                        x={data.x}
-                        y={data.y}
-                        scaleX={data.isDragging ? 1.1 : 1}
-                        scaleY={data.isDragging ? 1.1 : 1}
-                        onDragStart={handleDragAwayStart}
-                        onDragEnd={handleDragAwayEnd}
-                    >
-                        <Circle
-                            radius={20}
-                            fill="red"
-                            strokeWidth={1} // border width
-                            stroke="black" // border color
-                        />
-                        <Text
-                            text={data.value}
-                            fontSize={18}
-                            fill="black"
-                            x={-20}
-                            y={-6}
-                            align="center"
-                            verticalAlign="middle"
-                            width={40}
-                        />
-                    </Group>
-                ))}
-            </Layer>
-        </Stage>
+                    {awayPlayers.map((data) => (
+                        <Group
+                            key={data.id}
+                            id={data.id}
+                            draggable
+                            x={data.x}
+                            y={data.y}
+                            scaleX={data.isDragging ? 1.1 : 1}
+                            scaleY={data.isDragging ? 1.1 : 1}
+                            onDragStart={handleDragAwayStart}
+                            onDragEnd={handleDragAwayEnd}
+                        >
+                            <Circle
+                                radius={20}
+                                fill="red"
+                                strokeWidth={1} // border width
+                                stroke="black" // border color
+                            />
+                            <Text
+                                text={data.value}
+                                fontSize={18}
+                                fill="black"
+                                x={-20}
+                                y={-6}
+                                align="center"
+                                verticalAlign="middle"
+                                width={40}
+                            />
+                        </Group>
+                    ))}
+                </Layer>
+            </Stage>
+        </>
     );
 };
 export default GroundCanvas;
