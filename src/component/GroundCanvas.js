@@ -1,10 +1,27 @@
 import React, { useEffect, useRef, useMemo, useState, useLayoutEffect } from 'react';
 import { Stage, Layer, Group, Circle, Image, Text } from "react-konva";
+import { Html } from 'react-konva-utils';
 import useImage from 'use-image';
-import updateNumberModal from 'component/modal/updateNumberModal';
+import UpdateNumberModal from 'component/modal/UpdateNumberModal';
+import AlertModal from 'component/modal/AlertModal';
+import { FormControl, MenuItem, InputLabel, Select } from "@mui/material";
 
-const GroundImage = () => {
-    const [image] = useImage('img/ground2.jpg');
+const GroundImage = ({field}) => {
+    let img = 'img/ground2.jpg';
+    if(field === 'type1'){
+        img = 'img/ground2.jpg';
+    }
+    else if(field === 'type2'){
+        img = 'img/ground1.png';
+    }
+    else if(field === 'type3'){
+        img = 'img/ground3.jpg';
+    }
+    else if(field === 'type4'){
+        img = 'img/ground4.jpg';
+    }
+
+    const [image] = useImage(img);
     return (
         <Image image={image} width={650} height={900} offsetX={- (window.screen.width / 3)} offsetY={- (window.screen.height / 40)} />
     );
@@ -16,7 +33,7 @@ const homePlayers = () => {
         x: 550,
         y: (i + 2) * 70,
         isDragging: false,
-        value: "1"
+        value: ""
     }));
 }
 
@@ -26,7 +43,7 @@ const awayPlayers = () => {
         x: 1380,
         y: (i + 2) * 70,
         isDragging: false,
-        value: "1"
+        value: ""
     }));
 }
 
@@ -36,6 +53,16 @@ const INITIAL_AWAY = awayPlayers();
 const GroundCanvas = () => {
     const [homePlayers, setHomePlayers] = useState(INITIAL_HOME);
     const [awayPlayers, setAwayPlayers] = useState(INITIAL_AWAY);
+    const [playerUpdateModal, setPlayerUpdateModal] = useState(false);
+    const [currentPlayerInfo, setCurrentPlayerInfo] = useState({});
+    const [updateTarget, setUpdateTarget] = useState("");
+    const [alertOpen, setAlertOpen] = useState(false);
+    const [content, setContent] = useState("");
+    const [field, setField] = useState("type1");
+
+    const alertClose = () => {
+        setAlertOpen(false);
+    }
 
     const handleDragHomeStart = (e) => {
         const id = e.target.id();
@@ -83,23 +110,114 @@ const GroundCanvas = () => {
         );
     };
 
-    const handelDbClickHomePlayer = (e) =>{
+    const handelDbClickHomePlayer = (e) => {
         const id = e.target.id();
         let tempList = [...homePlayers];
- 
-        for(let i=0; i<tempList.length; i++){
-            if(tempList[i].id === id){
-                tempList[i].value = "2";           
+
+        for (let i = 0; i < tempList.length; i++) {
+            if (tempList[i].id === id) {
+                setCurrentPlayerInfo(tempList[i]);
+                break;
             }
         }
-        setHomePlayers(tempList)
+        setUpdateTarget('home');
+        setPlayerUpdateModal(true);
+    }
+
+    const handelDbClickAwayPlayer = (e) => {
+        const id = e.target.id();
+        let tempList = [...awayPlayers];
+
+        for (let i = 0; i < tempList.length; i++) {
+            if (tempList[i].id === id) {
+                setCurrentPlayerInfo(tempList[i]);
+                break;
+            }
+        }
+        setUpdateTarget('away');
+        setPlayerUpdateModal(true);
+    }
+
+    const closePlayerUpdateModal = () => {
+        setPlayerUpdateModal(false);
+    }
+
+    const UpdateNumber = (number) => {
+        if (number > 99) {
+            setContent("등번호는 100을 넘을 수 없습니다.");
+            setAlertOpen(true);
+            return false;
+        }
+
+        let tempHomeList = [...homePlayers];
+        let tempAwayList = [...awayPlayers];
+
+        if (updateTarget === 'home') {
+            for (let i = 0; i < tempHomeList.length; i++) {
+                if (tempHomeList[i].id === currentPlayerInfo.id) {
+                    tempHomeList[i].value = number;
+                    break;
+                }
+            }
+            setHomePlayers(tempHomeList);
+        } else {
+            for (let i = 0; i < tempAwayList.length; i++) {
+                if (tempAwayList[i].id === currentPlayerInfo.id) {
+                    tempAwayList[i].value = number;
+                    break;
+                }
+            }
+            setAwayPlayers(tempAwayList);
+        }
+
+        setPlayerUpdateModal(false); //모달 닫기
+    }
+
+    const changeField = (e) =>{
+        setField(e.target.value)
     }
 
     return (
         <>
             <Stage width={window.innerWidth} height={window.innerHeight} style={{ backgroundColor: '#1c3247' }}>
                 <Layer>
-                    <GroundImage />
+                    <Html
+                        divProps={{
+                            style: {
+                                position: 'absolute',
+                                top: 10,
+                                left: 10,
+                            },
+                        }}
+                    >
+                        <div style={{width: '180px', position: 'absolute', top: 20, left: 10}}>
+                            <FormControl fullWidth>
+                                <Select
+                                    style={{ backgroundColor: "white" }}
+                                    labelId="demo-simple-select-label"
+                                    id="demo-simple-select"
+                                    value={field}
+                                    onChange={changeField}
+                                    label=""
+                                    inputProps={{
+                                        MenuProps: {
+                                            MenuListProps: {
+                                                sx: {
+                                                    backgroundColor: 'white'
+                                                }
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value={'type1'}>Type1</MenuItem>
+                                    <MenuItem value={'type2'}>Type2</MenuItem>
+                                    <MenuItem value={'type3'}>Type3</MenuItem>
+                                    <MenuItem value={'type4'}>Type4</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </div>
+                    </Html>
+                    <GroundImage field={field}/>
                     {homePlayers.map((data) => (
                         <Group
                             key={data.id}
@@ -115,6 +233,7 @@ const GroundCanvas = () => {
                         >
                             <Circle
                                 radius={20}
+                                id={data.id}
                                 fill="white"
                                 strokeWidth={1} // border width
                                 stroke="black" // border color
@@ -144,15 +263,18 @@ const GroundCanvas = () => {
                             scaleY={data.isDragging ? 1.1 : 1}
                             onDragStart={handleDragAwayStart}
                             onDragEnd={handleDragAwayEnd}
+                            onDblClick={handelDbClickAwayPlayer}
                         >
                             <Circle
                                 radius={20}
+                                id={data.id}
                                 fill="red"
                                 strokeWidth={1} // border width
                                 stroke="black" // border color
                             />
                             <Text
                                 text={data.value}
+                                id={data.id}
                                 fontSize={18}
                                 fill="black"
                                 x={-20}
@@ -165,6 +287,19 @@ const GroundCanvas = () => {
                     ))}
                 </Layer>
             </Stage>
+
+            <UpdateNumberModal
+                open={playerUpdateModal}
+                onClose={closePlayerUpdateModal}
+                currentPlayerInfo={currentPlayerInfo}
+                UpdateNumber={UpdateNumber}
+            />
+
+            <AlertModal
+                open={alertOpen}
+                onClose={alertClose}
+                content={content}
+            />
         </>
     );
 };

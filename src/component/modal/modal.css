@@ -1,0 +1,18 @@
+.update-container{
+    width: 200px;
+    height: 90px;
+    user-select: none;
+}
+
+.update-item{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px;
+}
+
+.update-button-contoller{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
