@@ -1,23 +1,23 @@
 import React, { useEffect, useRef, useMemo, useState, useLayoutEffect } from 'react';
-import { Stage, Layer, Group, Circle, Image, Text } from "react-konva";
+import { Stage, Layer, Group, Circle, Image, Text, Line } from "react-konva";
 import { Html } from 'react-konva-utils';
 import useImage from 'use-image';
 import UpdateNumberModal from 'component/modal/UpdateNumberModal';
 import AlertModal from 'component/modal/AlertModal';
 import { FormControl, MenuItem, InputLabel, Select } from "@mui/material";
 
-const GroundImage = ({field}) => {
+const GroundImage = ({ field }) => {
     let img = 'img/ground2.jpg';
-    if(field === 'type1'){
+    if (field === 'type1') {
         img = 'img/ground2.jpg';
     }
-    else if(field === 'type2'){
+    else if (field === 'type2') {
         img = 'img/ground1.png';
     }
-    else if(field === 'type3'){
+    else if (field === 'type3') {
         img = 'img/ground3.jpg';
     }
-    else if(field === 'type4'){
+    else if (field === 'type4') {
         img = 'img/ground4.jpg';
     }
 
@@ -59,6 +59,11 @@ const GroundCanvas = () => {
     const [alertOpen, setAlertOpen] = useState(false);
     const [content, setContent] = useState("");
     const [field, setField] = useState("type1");
+
+    // draw component
+    const [isPaint, setIsPaint] = useState(false);
+    const [mode, setMode] = useState('brush');
+    const [lines, setLines] = useState([]);
 
     const alertClose = () => {
         setAlertOpen(false);
@@ -173,13 +178,58 @@ const GroundCanvas = () => {
         setPlayerUpdateModal(false); //모달 닫기
     }
 
-    const changeField = (e) =>{
+    const changeField = (e) => {
         setField(e.target.value)
+    }
+
+    const startDraw = (e) => {
+        //겹쳐져 있는 선수도형이 있는지 확인
+        const clickX = e.evt.clientX;
+        const clickY = e.evt.clientY;
+        const shape = e.target.getStage().getIntersection({ x: clickX, y: clickY });
+
+        if(shape && shape.attrs.id){
+            return false;
+        }
+
+        setIsPaint(true);
+        const pos = e.target.getStage().getPointerPosition();
+        setLines([...lines, { mode, points: [pos.x, pos.y] }]);
+    }
+
+    const endDraw = () => {
+        setIsPaint(false);
+    }
+
+    const handleMouseMove = (e) => {
+        if (!isPaint) {
+            return;
+        }
+
+        let stage = e.target.getStage();
+        let pointer = stage.getPointerPosition();
+        let lastLine = lines[lines.length - 1];
+        lastLine.points = lastLine.points.concat([pointer.x, pointer.y]);
+
+        // replace last
+        lines.splice(lines.length - 1, 1, lastLine);
+        setLines(lines.concat());
+    }
+
+    const changeToolMode = (e) =>{
+        setMode(e.target.value)
     }
 
     return (
         <>
-            <Stage width={window.innerWidth} height={window.innerHeight} style={{ backgroundColor: '#1c3247' }}>
+            <Stage
+                width={window.innerWidth}
+                height={window.innerHeight}
+                style={{ backgroundColor: '#1c3247' }}
+                onMouseDown={startDraw}
+                onMouseUp={endDraw}
+                onMouseMove={handleMouseMove}
+            >
                 <Layer>
                     <Html
                         divProps={{
@@ -190,34 +240,59 @@ const GroundCanvas = () => {
                             },
                         }}
                     >
-                        <div style={{width: '180px', position: 'absolute', top: 20, left: 10}}>
-                            <FormControl fullWidth>
-                                <Select
-                                    style={{ backgroundColor: "white" }}
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value={field}
-                                    onChange={changeField}
-                                    label=""
-                                    inputProps={{
-                                        MenuProps: {
-                                            MenuListProps: {
-                                                sx: {
-                                                    backgroundColor: 'white'
+                        <div>
+                            <div style={{ width: '180px', position: 'absolute', top: 20, left: 10 }}>
+                                <FormControl fullWidth>
+                                    <Select
+                                        style={{ backgroundColor: "white" }}
+                                        labelId="demo-simple-select-label"
+                                        id="demo-simple-select"
+                                        value={field}
+                                        onChange={changeField}
+                                        label=""
+                                        inputProps={{
+                                            MenuProps: {
+                                                MenuListProps: {
+                                                    sx: {
+                                                        backgroundColor: 'white'
+                                                    }
                                                 }
                                             }
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value={'type1'}>Type1</MenuItem>
-                                    <MenuItem value={'type2'}>Type2</MenuItem>
-                                    <MenuItem value={'type3'}>Type3</MenuItem>
-                                    <MenuItem value={'type4'}>Type4</MenuItem>
-                                </Select>
-                            </FormControl>
+                                        }}
+                                    >
+                                        <MenuItem value={'type1'}>Type1</MenuItem>
+                                        <MenuItem value={'type2'}>Type2</MenuItem>
+                                        <MenuItem value={'type3'}>Type3</MenuItem>
+                                        <MenuItem value={'type4'}>Type4</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </div>
+                            <div style={{ width: '180px', position: 'absolute', top: 20, left: 200 }}>
+                                <FormControl fullWidth>
+                                    <Select
+                                        style={{ backgroundColor: "white" }}
+                                        value={mode}
+                                        onChange={changeToolMode}
+                                        label=""
+                                        inputProps={{
+                                            MenuProps: {
+                                                MenuListProps: {
+                                                    sx: {
+                                                        backgroundColor: 'white'
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value={'brush'}>Brush</MenuItem>
+                                        <MenuItem value={'eraser'}>Eraser</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </div>
                         </div>
                     </Html>
-                    <GroundImage field={field}/>
+
+                    <GroundImage field={field} />
                     {homePlayers.map((data) => (
                         <Group
                             key={data.id}
@@ -284,6 +359,22 @@ const GroundCanvas = () => {
                                 width={40}
                             />
                         </Group>
+                    ))}
+                </Layer>
+                <Layer>
+                    {lines.map((line, i) => (
+                        <Line
+                            key={i}
+                            points={line.points}
+                            stroke="#df4b26"
+                            strokeWidth={line.mode === 'eraser' ? 20 : 3}
+                            tension={0.5}
+                            lineCap="round"
+                            lineJoin="round"
+                            globalCompositeOperation={
+                                line.mode === 'eraser' ? 'destination-out' : 'source-over'
+                            }
+                        />
                     ))}
                 </Layer>
             </Stage>
