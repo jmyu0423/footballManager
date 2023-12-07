@@ -4,30 +4,7 @@ import './modal.css';
 import { styled } from '@mui/material/styles';
 import { Box, Button, Card, CardActions, CardContent, Container, FormControlLabel, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import { BaseButton, DangerButton, NormalButton, AddButton } from 'component/CustomButton';
-
-const CustomTextField = styled(FormControlLabel)(({ theme }) => ({
-    width: 'auto',
-    alignItems: 'baseline',
-    margin: 0,
-
-    '& .MuiFormControlLabel-label': {
-        fontSize: '16px',
-        color: '#e57373',
-        fontWeight: 'bold',
-    },
-    '& .MuiInputBase-input': {
-        padding: '10px',
-        height: '12px',
-    },
-    '& .MuiTextField-root': {
-        width: '150px',
-        background: '#fcfcfc',
-
-        '.Mui-disabled': {
-            background: '#f7f7f7',
-        }
-    },
-}));
+import { CustomTextField } from 'component/customUi/CustomField';
 
 const UpdateNumberModal = ({ open, onClose, currentPlayerInfo, UpdateNumber }) => {
     const [number, setNumber] = useState("");
@@ -45,12 +22,15 @@ const UpdateNumberModal = ({ open, onClose, currentPlayerInfo, UpdateNumber }) =
             <div className='update-container'>
                 <div className='update-item'>
                     <CustomTextField
+                        fontSize={'16px'}
+                        width={'160px'}
+                        height={'10px'}
                         control={
                             <TextField
                                 value={number}
                                 onChange={(e)=>setNumber(e.target.value)}
                                 fullWidth
-                                inputProps={{ style: { height: '10px', fontSize: 14, fontWeight: 'bold', backgroundColor: 'white', textAlign: 'center' } }}
+                                inputProps={{ style: { fontSize: 14, fontWeight: 'bold', backgroundColor: 'white', textAlign: 'center' } }}
                                 placeholder=''
                             />
                         }

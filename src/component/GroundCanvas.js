@@ -5,6 +5,7 @@ import useImage from 'use-image';
 import UpdateNumberModal from 'component/modal/UpdateNumberModal';
 import AlertModal from 'component/modal/AlertModal';
 import { FormControl, MenuItem, InputLabel, Select } from "@mui/material";
+import { CustomTextField } from 'component/customUi/CustomField';
 
 const GroundImage = ({ field }) => {
     let img = 'img/ground2.jpg';
@@ -64,6 +65,10 @@ const GroundCanvas = () => {
     const [isPaint, setIsPaint] = useState(false);
     const [mode, setMode] = useState('brush');
     const [lines, setLines] = useState([]);
+    const [brushSize, setBrushSize] = useState(3);
+
+    // draw Tool
+    const [toolType, setToolType] = useState("draw");
 
     const alertClose = () => {
         setAlertOpen(false);
@@ -188,36 +193,55 @@ const GroundCanvas = () => {
         const clickY = e.evt.clientY;
         const shape = e.target.getStage().getIntersection({ x: clickX, y: clickY });
 
-        if(shape && shape.attrs.id){
+        if (shape && shape.attrs.id) {
             return false;
         }
 
         setIsPaint(true);
         const pos = e.target.getStage().getPointerPosition();
-        setLines([...lines, { mode, points: [pos.x, pos.y] }]);
+        setLines([...lines, { mode, brushSize, points: [pos.x, pos.y] }]);
     }
 
     const endDraw = () => {
         setIsPaint(false);
     }
 
+    //마우스 무브 이벤트
     const handleMouseMove = (e) => {
-        if (!isPaint) {
-            return;
+        if(toolType === "draw"){
+            if (!isPaint) {
+                return;
+            }
+
+            let stage = e.target.getStage();
+            let pointer = stage.getPointerPosition();
+            let lastLine = lines[lines.length - 1];
+            lastLine.points = lastLine.points.concat([pointer.x, pointer.y]);
+
+            // replace last
+            lines.splice(lines.length - 1, 1, lastLine);
+            setLines(lines.concat());
         }
-
-        let stage = e.target.getStage();
-        let pointer = stage.getPointerPosition();
-        let lastLine = lines[lines.length - 1];
-        lastLine.points = lastLine.points.concat([pointer.x, pointer.y]);
-
-        // replace last
-        lines.splice(lines.length - 1, 1, lastLine);
-        setLines(lines.concat());
     }
 
-    const changeToolMode = (e) =>{
+    const changeToolMode = (e) => {
         setMode(e.target.value)
+    }
+
+    const handleMouseWheel = (e) => {
+        let oldSize = brushSize;
+        let newSize = -(e.evt.deltaY) / 100 + oldSize;
+
+        //최소 사이즈 3
+        if (newSize < 3) {
+            setBrushSize(3);
+        } else {
+            setBrushSize(newSize)
+        }
+    }
+
+    const changeToolType = (e) =>{
+        setToolType(e.target.value);
     }
 
     return (
@@ -229,6 +253,7 @@ const GroundCanvas = () => {
                 onMouseDown={startDraw}
                 onMouseUp={endDraw}
                 onMouseMove={handleMouseMove}
+                onWheel={handleMouseWheel}
             >
                 <Layer>
                     <Html
@@ -240,13 +265,11 @@ const GroundCanvas = () => {
                             },
                         }}
                     >
-                        <div>
-                            <div style={{ width: '180px', position: 'absolute', top: 20, left: 10 }}>
-                                <FormControl fullWidth>
+                        <div style={{ position: 'absolute', top: 20, left: 10 }}>
+                            <div style={{ position: 'relative', display: 'flex' }}>
+                                <div style={{ marginRight: '8px' }}>
                                     <Select
-                                        style={{ backgroundColor: "white" }}
-                                        labelId="demo-simple-select-label"
-                                        id="demo-simple-select"
+                                        style={{ backgroundColor: "white", width: '120px', height: '40px' }}
                                         value={field}
                                         onChange={changeField}
                                         label=""
@@ -265,12 +288,31 @@ const GroundCanvas = () => {
                                         <MenuItem value={'type3'}>Type3</MenuItem>
                                         <MenuItem value={'type4'}>Type4</MenuItem>
                                     </Select>
-                                </FormControl>
-                            </div>
-                            <div style={{ width: '180px', position: 'absolute', top: 20, left: 200 }}>
-                                <FormControl fullWidth>
+                                </div>
+                                <div style={{ marginRight: '8px' }}>
                                     <Select
-                                        style={{ backgroundColor: "white" }}
+                                        style={{ backgroundColor: "white", width: '120px', height: '40px' }}
+                                        value={toolType}
+                                        onChange={changeToolType}
+                                        label=""
+                                        inputProps={{
+                                            MenuProps: {
+                                                MenuListProps: {
+                                                    sx: {
+                                                        backgroundColor: 'white'
+                                                    }
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <MenuItem value={'draw'}>Draw</MenuItem>
+                                        <MenuItem value={'arrow'}>Arrow</MenuItem>
+                                    </Select>
+                                </div>
+                                {toolType === "draw" ?
+                                <div>
+                                    <Select
+                                        style={{ backgroundColor: "white", width: '120px', height: '40px' }}
                                         value={mode}
                                         onChange={changeToolMode}
                                         label=""
@@ -287,7 +329,13 @@ const GroundCanvas = () => {
                                         <MenuItem value={'brush'}>Brush</MenuItem>
                                         <MenuItem value={'eraser'}>Eraser</MenuItem>
                                     </Select>
-                                </FormControl>
+                                </div>
+                                :
+                                null
+                                }
+                            </div>
+                            <div style={{ position: 'relative', display: 'flex' }}>
+                                
                             </div>
                         </div>
                     </Html>
@@ -367,7 +415,7 @@ const GroundCanvas = () => {
                             key={i}
                             points={line.points}
                             stroke="#df4b26"
-                            strokeWidth={line.mode === 'eraser' ? 20 : 3}
+                            strokeWidth={line.brushSize}
                             tension={0.5}
                             lineCap="round"
                             lineJoin="round"
