@@ -6,6 +6,7 @@ import UpdateNumberModal from 'component/modal/UpdateNumberModal';
 import AlertModal from 'component/modal/AlertModal';
 import { FormControl, MenuItem, InputLabel, Select } from "@mui/material";
 import { CustomTextField } from 'component/customUi/CustomField';
+import CustomArrow from 'component/konva/CustomArrow';
 
 const GroundImage = ({ field }) => {
     let img = 'img/ground2.jpg';
@@ -67,8 +68,15 @@ const GroundCanvas = () => {
     const [lines, setLines] = useState([]);
     const [brushSize, setBrushSize] = useState(3);
 
+    // arrow component
+    const [isArrowing, setArrowing] = useState(false)
+    const [arrows, setArrows] = useState([]);
+
     // draw Tool
-    const [toolType, setToolType] = useState("draw");
+    const [toolType, setToolType] = useState("none");
+
+    useEffect(()=>{
+    },[arrows])
 
     const alertClose = () => {
         setAlertOpen(false);
@@ -193,17 +201,45 @@ const GroundCanvas = () => {
         const clickY = e.evt.clientY;
         const shape = e.target.getStage().getIntersection({ x: clickX, y: clickY });
 
-        if (shape && shape.attrs.id) {
-            return false;
-        }
 
-        setIsPaint(true);
-        const pos = e.target.getStage().getPointerPosition();
-        setLines([...lines, { mode, brushSize, points: [pos.x, pos.y] }]);
+        if(e.evt.button === 1){
+            if(shape && shape.attrs.dashEnabled){
+                let tempList = [...arrows];
+                tempList.splice(shape.index, 1);
+                setArrows(tempList)
+            }
+        }else if(e.evt.button === 0){
+            if (shape && shape.attrs.id) {
+                return false;
+            }
+
+            if(shape && shape.attrs.dashEnabled){
+                return false;
+            }
+            
+            const pos = e.target.getStage().getPointerPosition();
+
+            if(toolType === "draw"){
+                setIsPaint(true);
+                setLines([...lines, { mode, brushSize, points: [pos.x, pos.y] }]);
+            }else if(toolType === "arrow"){
+                setArrowing(true);
+                setArrows([...arrows, {
+                    isDrawnig: true,
+                    toolType,
+                    arrowStartPos: { x: pos.x, y: pos.y },
+                    arrowEndPos: { x: pos.x, y: pos.y }
+                }])
+            }
+        }
     }
 
     const endDraw = () => {
-        setIsPaint(false);
+        if(toolType === "draw"){
+            setIsPaint(false);
+        }else if(toolType === "arrow"){
+            setArrowing(false);
+        }
     }
 
     //마우스 무브 이벤트
@@ -221,6 +257,17 @@ const GroundCanvas = () => {
             // replace last
             lines.splice(lines.length - 1, 1, lastLine);
             setLines(lines.concat());
+        }else if(toolType === "arrow"){
+            if(!isArrowing){
+                return;
+            }
+
+            const { offsetX, offsetY } = e.evt;
+            let tempList = [...arrows];
+            if(tempList.length > 0){
+                tempList[tempList.length - 1].arrowEndPos = { x: offsetX, y: offsetY }
+                setArrows(tempList)
+            }
         }
     }
 
@@ -305,6 +352,7 @@ const GroundCanvas = () => {
                                             }
                                         }}
                                     >
+                                        <MenuItem value={'none'}>None</MenuItem>
                                         <MenuItem value={'draw'}>Draw</MenuItem>
                                         <MenuItem value={'arrow'}>Arrow</MenuItem>
                                     </Select>
@@ -422,6 +470,20 @@ const GroundCanvas = () => {
                             globalCompositeOperation={
                                 line.mode === 'eraser' ? 'destination-out' : 'source-over'
                             }
+                        />
+                    ))}
+                </Layer>
+                <Layer>
+                    {arrows.map((arrow, i) =>(
+                        <CustomArrow
+                            key={i}
+                            startPos={arrow.arrowStartPos}
+                            endPos={arrow.arrowEndPos}
+                            pointerLength={20}
+                            pointerWidth={20}
+                            fill={'black'}
+                            stroke={'black'}
+                            strokeWidth={4}
                         />
                     ))}
                 </Layer>
